@@ -7,6 +7,7 @@ extern mod calm;
 
 use calm::tree::binary::MutableTree;
 use calm::tree::binary::PrintableTree;
+use calm::tree::binary::SearchTree;
 use calm::tree::binary::BinarySearchTree;
 
 
@@ -26,5 +27,6 @@ fn main() {
     a.insert(15,0);
     a.insert(5,0);
     a.print();
+    println(format!("Contains 20? {}", *a.find_node(20).unwrap()));
     println("Hello World");
 }

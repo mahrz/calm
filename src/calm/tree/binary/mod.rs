@@ -146,8 +146,14 @@ pub trait PrintableTree<K, V> {
  * Methods implemented by any binary search tree (binary search tree as in searchable binary tree)
  */
 pub trait SearchTree<K, V, T, TAttr> {
-    fn contains(&self, key: K) -> bool;
-    fn find_value<'r>(&'r self, key: K) -> Option<&'r V>;
+    fn contains(&self, key: K) -> bool {
+        !self.find_node(key).is_none()
+    }
+
+    fn find_value<'r>(&'r self, key: K) -> Option<&'r V> {
+        self.find_node(key).map(|n| &n.value)
+    }
+
     fn find_node<'r>(&'r self, key: K) -> Option<&'r Node<K, V, T, TAttr>>;
     fn traverse<'r>(&'r self, f: |K,V|);
 }
@@ -176,7 +182,7 @@ pub struct BinarySearchTree<K, V> {
     root: Option<~Node<K, V, BinarySearchTree<K,V>,NoAttr>>
 }
 
-impl<K: Orderable, V> BinarySearchTree<K, V> {
+impl<K: Ord, V> BinarySearchTree<K, V> {
     pub fn init() -> BinarySearchTree<K, V> {
         return BinarySearchTree { root: None };
     }
@@ -191,7 +197,7 @@ impl<K:fmt::Default,V:fmt::Default> PrintableTree<K,V> for BinarySearchTree<K, V
     }
 }
 
-impl<K: Orderable, V> MutableTree<K, V> for BinarySearchTree<K, V> {
+impl<K: Ord, V> MutableTree<K, V> for BinarySearchTree<K, V> {
 
     fn insert(&mut self, key: K, value: V) -> () {
         match self.root {
@@ -206,8 +212,33 @@ impl<K: Orderable, V> MutableTree<K, V> for BinarySearchTree<K, V> {
     }
 }
 
+impl<K: Ord + Eq, V> SearchTree<K, V, BinarySearchTree<K, V>, NoAttr> 
+for BinarySearchTree<K, V> {
+    fn find_node<'r>(&'r self, key: K) -> Option<&'r Node<K, V, BinarySearchTree<K, V>, NoAttr>> {
+        let mut cur_node = &self.root;
+        while !cur_node.is_none() {
+            match cur_node {
+                &Some(~ref node) => {
+                    if node.key == key {
+                        return Some(node);
+                    } else if key < node.key {
+                        cur_node = &node.left;
+                    } else {
+                        cur_node = &node.right;
+                    }
+                },            
+                &None => {}
+            }
+        }
+        return None;
+    }
+    
+    fn traverse<'r>(&'r self, f: |K,V|) {
+    }
+}
 
-impl<K: Orderable, V> TreeNode<K, V, BinarySearchTree<K, V>,NoAttr> for Node<K, V, BinarySearchTree<K, V>,NoAttr> {
+impl<K: Ord, V> TreeNode<K, V, BinarySearchTree<K, V>,NoAttr> 
+for Node<K, V, BinarySearchTree<K, V>,NoAttr> {
     fn init(key: K, value: V) -> Node<K, V, BinarySearchTree<K,V>,NoAttr> {
         return Node::<K, V, BinarySearchTree<K, V>,NoAttr> { 
             left: None, 
