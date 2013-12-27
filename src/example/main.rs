@@ -6,12 +6,13 @@
 extern mod calm;
 
 use calm::tree::binary::MutableTree;
+use calm::tree::binary::PrintableTree;
 use calm::tree::binary::BinarySearchTree;
 
 
 fn main() {
     let mut a = BinarySearchTree::<int,int>::init();
-
+    a.print();
     a.insert(5,0);
     a.insert(3,0);
     a.insert(10,0);
@@ -24,6 +25,6 @@ fn main() {
     a.insert(20,0);
     a.insert(15,0);
     a.insert(5,0);
-    a.root.unwrap().print();
+    a.print();
     println("Hello World");
 }

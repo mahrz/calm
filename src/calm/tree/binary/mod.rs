@@ -128,6 +128,10 @@ impl<K:fmt::Default, V:fmt::Default, T, TAttr> fmt::Default for Node<K, V, T, TA
     }
 }
 
+pub trait PrintableTree<K, V> {
+    fn print(&self);
+}
+
 /** 
  * Search Tree
  *
@@ -167,6 +171,15 @@ pub struct BinarySearchTree<K, V> {
 impl<K: Orderable, V> BinarySearchTree<K, V> {
     pub fn init() -> BinarySearchTree<K, V> {
         return BinarySearchTree { root: None };
+    }
+}
+
+impl<K:fmt::Default,V:fmt::Default> PrintableTree<K,V> for BinarySearchTree<K, V> {
+    fn print(&self) {
+        match self.root {
+            Some(ref node) => node.print(),
+            None => println("Empty tree")
+        }
     }
 }
 
