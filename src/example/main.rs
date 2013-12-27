@@ -14,10 +14,16 @@ fn main() {
 
     a.insert(5,0);
     a.insert(3,0);
-    a.insert(7,0);
+    a.insert(10,0);
     a.insert(1,0);
     a.insert(6,0);
+    a.insert(9,0);
+    a.insert(8,0);
+    a.insert(2,0);
+    a.insert(14,0);
     a.insert(20,0);
+    a.insert(15,0);
+    a.insert(5,0);
     a.root.unwrap().print();
     println("Hello World");
 }

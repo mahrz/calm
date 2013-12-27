@@ -1,4 +1,5 @@
 use std::fmt;
+use std::num::max;
 
 /** 
  * Binary Tree Nodes 
@@ -13,34 +14,84 @@ pub struct Node<K, V, T, TAttr> {
     attribute: TAttr
 }
 
+impl<K, V, T, TAttr> Node<K, V, T, TAttr> {
+    pub fn max_depth(&self) -> uint {
+        max(match self.left  { Some(ref left) => left.max_depth() + 1, None => 0},
+            match self.right { Some(ref right) => right.max_depth() + 1, None => 0})
+    }
+}
+
 impl<K:fmt::Default, V:fmt::Default, T, TAttr> Node<K, V, T, TAttr> {
     pub fn print(&self) {
         let mut nds:~[&Node<K, V, T, TAttr>] = ~[self];
         let mut new_nds:~[&Node<K, V, T, TAttr>] = ~[];
+        let mut offsets = ~[0];
+        let mut new_offsets:~[int] = ~[];
         while !nds.is_empty() {
+            let mut cur_offset = 0;
             while !nds.is_empty() {
                 let head = nds.shift();
-                let l = head.left_width();
-                for i in range(0, l) {
-                    print(" ")
+                let head_offset:int = offsets.shift();
+                let l:int = head.left_width() as int;
+                let h:int = head.node_width() as int;
+                let r:int = head.right_width() as int;
+
+                let mut lbal:int = match head.left {
+                    Some(~ref left) => left.right_width() + left.node_width()/2,
+                    None => 0
+                } as int;
+
+                let mut rbal:int = match head.right {
+                    Some(~ref right) => right.left_width() + right.node_width()/2,
+                    None => 0
+                } as int;
+
+                let mut loffset = head_offset - cur_offset + l;
+                let mut roffset = r;
+
+                for i in range(0,loffset) {
+                    if i > loffset - lbal {
+                        print("-")
+                    } else if i == loffset - lbal {
+                        print("+")
+                    } else {
+                        print(" ")
+                    }
                 }
+                
                 head.print_node_only();
-                let r = self.right_width();
-                for i in range(0, l) {
-                    print(" ")
+                
+                for i in range(0, roffset) {
+                    if i < rbal-1 {
+                        print("-")
+                    } else if i == rbal-1 {
+                        print("+")
+                    } else {
+                        print(" ")
+                    }
                 }
+                cur_offset +=  loffset + h + roffset;
+
                 match head.left {
-                    Some(ref left) => new_nds.push(left),
+                    Some(~ref left) => { 
+                        new_nds.push(left);
+                        new_offsets.push(head_offset);
+                    },
                     None => {}
                 }
                 match head.right {
-                    Some(ref right) => new_nds.push(right),
+                    Some(~ref right) => { 
+                        new_nds.push(right);
+                        new_offsets.push(cur_offset - r);
+                    },
                     None => {}
                 }
-
             }
+            println("");
             nds = new_nds.clone();
+            offsets = new_offsets.clone();
             new_nds.clear();
+            new_offsets.clear();
         }
     }
 
@@ -54,21 +105,20 @@ impl<K:fmt::Default, V:fmt::Default, T, TAttr> Node<K, V, T, TAttr> {
 
     pub fn left_width(&self) -> uint {
         match self.left {
-            Some(ref left) => left.node_width() + left.left_width(),
+            Some(ref left) => left.node_width() + left.right_width() + left.left_width(),
             None => 0
         }
     }
 
     pub fn right_width(&self) -> uint {
         match self.right {
-            Some(ref right) => right.node_width() + right.left_width(),
+            Some(ref right) => right.node_width() + right.right_width() + right.left_width(),
             None => 0
         }
     }
 
-
     pub fn node_str(&self) -> ~str {
-        format!(" {} ", *self)
+        format!("{}", *self)
     } 
 }
 
