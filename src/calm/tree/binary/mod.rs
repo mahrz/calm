@@ -1,6 +1,8 @@
 use std::fmt;
 use std::num::max;
 
+pub struct NoAttr;
+
 /** 
  * Binary Tree Nodes 
  *
@@ -21,7 +23,7 @@ impl<K, V, T, TAttr> Node<K, V, T, TAttr> {
     }
 }
 
-impl<K:fmt::Default, V:fmt::Default, T, TAttr> Node<K, V, T, TAttr> {
+impl<K:fmt::Default, V:fmt::Default, T, TAttr:fmt::Default> Node<K, V, T, TAttr> {
     pub fn print(&self) {
         let mut nds:~[&Node<K, V, T, TAttr>] = ~[self];
         let mut new_nds:~[&Node<K, V, T, TAttr>] = ~[];
@@ -46,8 +48,8 @@ impl<K:fmt::Default, V:fmt::Default, T, TAttr> Node<K, V, T, TAttr> {
                     None => 0
                 } as int;
 
-                let mut loffset = head_offset - cur_offset + l;
-                let mut roffset = r;
+                let loffset = head_offset - cur_offset + l;
+                let roffset = r;
 
                 for i in range(0,loffset) {
                     if i > loffset - lbal {
@@ -122,9 +124,15 @@ impl<K:fmt::Default, V:fmt::Default, T, TAttr> Node<K, V, T, TAttr> {
     } 
 }
 
-impl<K:fmt::Default, V:fmt::Default, T, TAttr> fmt::Default for Node<K, V, T, TAttr> {
+impl<K:fmt::Default, V:fmt::Default, T, TAttr:fmt::Default> fmt::Default for Node<K, V, T, TAttr> {
     fn fmt(obj: &Node<K, V, T, TAttr>, f: &mut fmt::Formatter) {
-        write!(f.buf, "({},{})", obj.key, obj.value)
+        write!(f.buf, "({},{}{})", obj.key, obj.value, obj.attribute)
+    }
+}
+
+impl fmt::Default for NoAttr {
+    fn fmt(obj: &NoAttr, f: &mut fmt::Formatter) {
+        write!(f.buf, "")
     }
 }
 
@@ -165,7 +173,7 @@ trait TreeNode<K, V, T, TAttr> {
 }
 
 pub struct BinarySearchTree<K, V> {
-    root: Option<~Node<K, V, BinarySearchTree<K,V>, ()>>
+    root: Option<~Node<K, V, BinarySearchTree<K,V>,NoAttr>>
 }
 
 impl<K: Orderable, V> BinarySearchTree<K, V> {
@@ -199,14 +207,14 @@ impl<K: Orderable, V> MutableTree<K, V> for BinarySearchTree<K, V> {
 }
 
 
-impl<K: Orderable, V> TreeNode<K, V, BinarySearchTree<K, V>, ()> for Node<K, V, BinarySearchTree<K, V>, ()> {
-    fn init(key: K, value: V) -> Node<K, V, BinarySearchTree<K,V>, ()> {
-        return Node::<K, V, BinarySearchTree<K, V>, ()> { 
+impl<K: Orderable, V> TreeNode<K, V, BinarySearchTree<K, V>,NoAttr> for Node<K, V, BinarySearchTree<K, V>,NoAttr> {
+    fn init(key: K, value: V) -> Node<K, V, BinarySearchTree<K,V>,NoAttr> {
+        return Node::<K, V, BinarySearchTree<K, V>,NoAttr> { 
             left: None, 
             right: None,
             key: key,            
             value: value,
-            attribute: ()
+            attribute: NoAttr
         };
     }
 

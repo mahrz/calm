@@ -3,6 +3,8 @@
 
 #[ crate_type = "lib" ];
 
+use std::fmt;
+
 pub mod tree;
 
 
