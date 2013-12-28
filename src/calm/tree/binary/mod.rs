@@ -1,7 +1,7 @@
 use std::fmt;
 use std::num::max;
 
-pub struct NoAttr;
+struct NoAttr;
 
 /** 
  * Binary Tree Nodes 
@@ -155,7 +155,7 @@ pub trait SearchTree<K, V, T, TAttr> {
     }
 
     fn find_node<'r>(&'r self, key: K) -> Option<&'r Node<K, V, T, TAttr>>;
-    fn traverse<'r>(&'r self, f: |K,V|);
+    fn traverse<'r>(&'r self, f: |&K,&V|);
 }
 
 /** 
@@ -198,7 +198,6 @@ impl<K:fmt::Default,V:fmt::Default> PrintableTree<K,V> for BinarySearchTree<K, V
 }
 
 impl<K: Ord, V> MutableTree<K, V> for BinarySearchTree<K, V> {
-
     fn insert(&mut self, key: K, value: V) -> () {
         match self.root {
             Some(ref mut node) => node.insert_in_node(key, value),
@@ -233,7 +232,38 @@ for BinarySearchTree<K, V> {
         return None;
     }
     
-    fn traverse<'r>(&'r self, f: |K,V|) {
+    fn traverse<'r>(&'r self, f: |&K,&V|) {
+        let mut stack: ~[Option<&'r Node<K, V, BinarySearchTree<K, V>, NoAttr>>] = ~[];
+        let mut cur_node;
+
+        cur_node = self.root.as_borrowed();
+
+        while !(stack.is_empty() && cur_node.is_none()) {
+            match cur_node {
+                Some(node) => {
+                    stack.push(Some(node));
+                    cur_node = node.left.as_borrowed();
+                }
+                None => {
+                    cur_node = stack.pop();
+                    f(&(*cur_node.unwrap()).key, &(*cur_node.unwrap()).value);
+                    cur_node = (*cur_node.unwrap()).right.as_borrowed();
+                }
+            }
+        }
+    }
+}
+
+trait BorrowedOption<T> {
+    fn as_borrowed<'r>(&'r self) -> Option<&'r T>;
+}
+
+impl<T> BorrowedOption<T> for Option<~T> {
+    fn as_borrowed<'r>(&'r self) -> Option<&'r T> {
+        match self {
+            &Some(~ref o) => Some(o),
+            &None => None
+        }
     }
 }
 

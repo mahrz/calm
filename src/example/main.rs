@@ -1,14 +1,13 @@
-#[ desc = "Calm data structure library showcase" ];
-#[ license = "MIT" ];
+#[desc = "Calm data structure library showcase"];
+#[license = "MIT"];
 
-#[ crate_type = "bin" ];
+#[crate_type = "bin"];
+#[feature(globs)];
 
 extern mod calm;
 
-use calm::tree::binary::MutableTree;
-use calm::tree::binary::PrintableTree;
-use calm::tree::binary::SearchTree;
-use calm::tree::binary::BinarySearchTree;
+
+use calm::tree::binary::*;
 
 
 fn main() {
@@ -28,5 +27,6 @@ fn main() {
     a.insert(5,0);
     a.print();
     println(format!("Contains 20? {}", *a.find_node(20).unwrap()));
+    a.traverse(|k,v| print(format!("({},{})", *k, *v)));
     println("Hello World");
 }
