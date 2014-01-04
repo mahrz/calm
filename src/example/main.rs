@@ -28,5 +28,9 @@ fn main() {
     a.print();
     println(format!("Contains 20? {}", *a.find_node(20).unwrap()));
     a.traverse(|k,v| print(format!("({},{})", *k, *v)));
+    let b = a.find_node(20);
+    unsafe {
+        println(format!("{}", (*(b.unwrap().parent.unwrap())).key));
+    }    
     println("Hello World");
 }

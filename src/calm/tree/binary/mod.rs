@@ -1,6 +1,8 @@
 use std::fmt;
 use std::num::max;
+use std::cast;
 
+#[deriving(Eq)]
 struct NoAttr;
 
 /** 
@@ -11,6 +13,9 @@ struct NoAttr;
 pub struct Node<K, V, T, TAttr> {
     left:  Option<~Node<K, V, T, TAttr>>,
     right: Option<~Node<K, V, T, TAttr>>,
+    // This is unsafe, but currently better than a complicated Rc with new_unchecked
+    // Lifetime is actually given as the parent object always owns the child
+    parent: Option<*Node<K, V, T, TAttr>>,
     key: K,
     value: V,
     attribute: TAttr
@@ -21,6 +26,7 @@ impl<K, V, T, TAttr> Node<K, V, T, TAttr> {
         max(match self.left  { Some(ref left) => left.max_depth() + 1, None => 0},
             match self.right { Some(ref right) => right.max_depth() + 1, None => 0})
     }
+
 }
 
 impl<K:fmt::Default, V:fmt::Default, T, TAttr:fmt::Default> Node<K, V, T, TAttr> {
@@ -174,9 +180,10 @@ pub trait MutableTree<K, V> {
  * Trait that is implemented by specific node implementations depending on the tree
  */
 trait TreeNode<K, V, T, TAttr> {
-    fn init(key: K, value: V) -> Self;
+    fn init(parent: Option<*Node<K,V,T,TAttr>>, key: K, value: V) -> Self;
     fn insert_in_node(&mut self, key: K, value: V);
 }
+
 
 pub struct BinarySearchTree<K, V> {
     root: Option<~Node<K, V, BinarySearchTree<K,V>,NoAttr>>
@@ -197,17 +204,44 @@ impl<K:fmt::Default,V:fmt::Default> PrintableTree<K,V> for BinarySearchTree<K, V
     }
 }
 
-impl<K: Ord, V> MutableTree<K, V> for BinarySearchTree<K, V> {
+impl<K: Ord + Eq, V> MutableTree<K, V> for BinarySearchTree<K, V> {
     fn insert(&mut self, key: K, value: V) -> () {
         match self.root {
             Some(ref mut node) => node.insert_in_node(key, value),
             None => { 
-                self.root = Some(~(TreeNode::init(key,value)));
+                self.root = Some(~(TreeNode::init(None, key, value)));
             }
         }
     }
 
     fn delete(&mut self, key: K) -> () {
+        let mut node = self.find_node(key);
+        match node {
+            Some(ref mut node) => {
+                if node.left.is_some() && node.right.is_some() {
+                }
+                else if node.left.is_some() {
+                }
+                else if node.right.is_some() {
+                }
+                else {
+                    match node.parent {
+                        Some(mut p) => {
+                            unsafe {
+                                if (*p).left.is_some() && (*p).left.unwrap().key == node.key {
+                                    (*p).left = None;
+                                }
+                                if (*p).right.is_some() && (*p).right.unwrap().key == node.key {
+                                    (*p).right = None;
+                                }
+                            }
+                        },
+                        None => {}
+                    }
+                }
+            },
+            None => {}
+        }
     }
 }
 
@@ -269,10 +303,11 @@ impl<T> BorrowedOption<T> for Option<~T> {
 
 impl<K: Ord, V> TreeNode<K, V, BinarySearchTree<K, V>,NoAttr> 
 for Node<K, V, BinarySearchTree<K, V>,NoAttr> {
-    fn init(key: K, value: V) -> Node<K, V, BinarySearchTree<K,V>,NoAttr> {
+    fn init(parent: Option<*Node<K, V, BinarySearchTree<K, V>,NoAttr>>, key: K, value: V) -> Node<K, V, BinarySearchTree<K,V>,NoAttr> {
         return Node::<K, V, BinarySearchTree<K, V>,NoAttr> { 
             left: None, 
             right: None,
+            parent: parent,
             key: key,            
             value: value,
             attribute: NoAttr
@@ -283,12 +318,18 @@ for Node<K, V, BinarySearchTree<K, V>,NoAttr> {
         if key < self.key {
             match self.left {
                 Some(ref mut node) => node.insert_in_node(key, value),
-                None => { self.left =  Some(~TreeNode::init(key, value)) }
+                None => unsafe { 
+                    self.left = Some(~TreeNode::init(
+                            Some(&*self as *Node<K, V, BinarySearchTree<K, V>, NoAttr>), key, value)) 
+                }
             }
         } else {
             match self.right {
                 Some(ref mut node) => node.insert_in_node(key, value),
-                None => { self.right =  Some(~TreeNode::init(key, value)) }
+                None => unsafe { 
+                    self.right = Some(~TreeNode::init(
+                            Some(&*self as *Node<K, V, BinarySearchTree<K, V>,NoAttr>), key, value)) 
+                }
             }
         }
     }
